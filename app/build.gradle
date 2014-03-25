@@ -27,6 +27,5 @@ dependencies {
     compile 'com.actionbarsherlock:actionbarsherlock:4.4.0@aar'
     compile 'com.android.support:support-v4:19.0.+'
     compile 'com.loopj.android:android-async-http:1.4.4'
-
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }

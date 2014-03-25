@@ -7,5 +7,7 @@
     <string name="search">Search</string>
     <string name="query_hint">Enter Search Term</string>
     <string name="title_activity_image_display">ImageDisplayActivity</string>
+    <string name="pref_title_color_filter">Color Filter</string>
+    <string name="pref_title_image_type">Image Type</string>
 
 </resources>
