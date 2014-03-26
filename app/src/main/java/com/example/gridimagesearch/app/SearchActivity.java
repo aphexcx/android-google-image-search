@@ -1,8 +1,13 @@
 package com.example.gridimagesearch.app;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.text.format.Formatter;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -18,6 +23,7 @@ import com.actionbarsherlock.view.MenuItem;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 
+import org.apache.http.Header;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,12 +38,16 @@ public class SearchActivity extends SherlockFragmentActivity {
 
     ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
     ImageResultArrayAdapter imageAdapter;
+    private String baseUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setupViews();
+
+        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM | ActionBar.DISPLAY_SHOW_HOME);
+        getSupportActionBar().setCustomView(R.layout.actionbar_title);
 
         imageAdapter = new ImageResultArrayAdapter(this, imageResults);
         gvResults.setAdapter(imageAdapter);
@@ -52,8 +62,14 @@ public class SearchActivity extends SherlockFragmentActivity {
             }
         });
 
-        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM | ActionBar.DISPLAY_SHOW_HOME);
-        getSupportActionBar().setCustomView(R.layout.actionbar_title);
+    }
+
+    // Append more data into the adapter
+    public void customLoadMoreDataFromApi(int offset) {
+        // This method probably sends out a network request and appends new data items to your adapter.
+        // Use the offset value and add it as a parameter to your API request to retrieve paginated data.
+        // Deserialize API response and then construct new objects to append to the adapter
+        getPage(offset);
     }
 
     private void setupViews() {
@@ -69,26 +85,73 @@ public class SearchActivity extends SherlockFragmentActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
+    private String getIP() {
+        WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
+        String ip = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
+        return ip;
+    }
+
     public void onImageSearch(View view) {
         String query = etQuery.getText().toString();
         Toast.makeText(this, "Searching for " + query, Toast.LENGTH_SHORT).show();
 
-        AsyncHttpClient client = new AsyncHttpClient();
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        String image_size = sharedPref.getString("image_size", "");
+        String image_type = sharedPref.getString("image_type", "");
+        String color_filter = sharedPref.getString("color_filter", "");
+        String site_filter = sharedPref.getString("site_filter", "");
+
+        imageResults.clear();
+
+        gvResults.setOnScrollListener(new EndlessScrollListener(8, 0) {
+            @Override
+            public void onLoadMore(int page, int totalItemsCount) {
+                // Triggered only when new data needs to be appended to the list
+                // Add whatever code is needed to append new items to your AdapterView
+                customLoadMoreDataFromApi(totalItemsCount);
+                // or customLoadMoreDataFromApi(totalItemsCount);
+            }
+        });
+
         // https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=android
-        client.get("https://ajax.googleapis.com/ajax/services/search/images?rsz=8&"
-                        + "start=" + 0 + "&v=1.0&q=" + Uri.encode(query),
+        baseUrl = "https://ajax.googleapis.com/ajax/services/search/images?rsz=8";
+        baseUrl += "&userip=" + getIP();
+        if (!image_size.isEmpty()) {
+            baseUrl += "&imgsz=" + image_size;
+        }
+        if (!image_type.isEmpty()) {
+            baseUrl += "&imgtype=" + image_type;
+        }
+        if (!color_filter.isEmpty()) {
+            baseUrl += "&imgcolor=" + color_filter;
+        }
+        if (!site_filter.isEmpty()) {
+            baseUrl += "&as_sitesearch=" + site_filter;
+        }
+        baseUrl += "&v=1.0&q=" + Uri.encode(query);
+        Log.d("sa", baseUrl);
+        getPage(0);
+    }
+
+    private void getPage(int start) {
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.get(baseUrl + "&start=" + start,
                 new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(JSONObject response) {
                         JSONArray imageJsonResults = null;
                         try {
                             imageJsonResults = response.getJSONObject("responseData").getJSONArray("results");
-                            imageResults.clear();
                             imageAdapter.addAll(ImageResult.fromJSONArray(imageJsonResults));
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
 
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject errorResponse) {
+                        super.onFailure(statusCode, headers, e, errorResponse);
                     }
                 }
         );
