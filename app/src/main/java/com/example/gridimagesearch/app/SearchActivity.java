@@ -1,5 +1,7 @@
 package com.example.gridimagesearch.app;
 
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -10,16 +12,14 @@ import android.text.format.Formatter;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.widget.SearchView;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 
@@ -32,9 +32,7 @@ import java.util.ArrayList;
 
 
 public class SearchActivity extends SherlockFragmentActivity {
-    EditText etQuery;
     GridView gvResults;
-    Button btnSearch;
 
     ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
     ImageResultArrayAdapter imageAdapter;
@@ -44,10 +42,7 @@ public class SearchActivity extends SherlockFragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setupViews();
-
-        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM | ActionBar.DISPLAY_SHOW_HOME);
-        getSupportActionBar().setCustomView(R.layout.actionbar_title);
+        gvResults = (GridView) findViewById(R.id.gvResults);
 
         imageAdapter = new ImageResultArrayAdapter(this, imageResults);
         gvResults.setAdapter(imageAdapter);
@@ -61,7 +56,6 @@ public class SearchActivity extends SherlockFragmentActivity {
 
             }
         });
-
     }
 
     // Append more data into the adapter
@@ -72,16 +66,31 @@ public class SearchActivity extends SherlockFragmentActivity {
         getPage(offset);
     }
 
-    private void setupViews() {
-        etQuery = (EditText) findViewById(R.id.etQuery);
-        gvResults = (GridView) findViewById(R.id.gvResults);
-        btnSearch = (Button) findViewById(R.id.btnSearch);
-    }
-
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(final Menu menu) {
         MenuInflater inflater = getSupportMenuInflater();
         inflater.inflate(R.menu.main, menu);
+        // Associate searchable configuration with the SearchView
+        SearchManager searchManager =
+                (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView =
+                (SearchView) menu.findItem(R.id.search).getActionView();
+        searchView.setSearchableInfo(
+                searchManager.getSearchableInfo(getComponentName()));
+        searchView.setQueryHint("Google Image Search"); // R.string.search_hint
+        searchView.setIconified(false);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                search(query);
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -91,8 +100,7 @@ public class SearchActivity extends SherlockFragmentActivity {
         return ip;
     }
 
-    public void onImageSearch(View view) {
-        String query = etQuery.getText().toString();
+    private void search(String query) {
         Toast.makeText(this, "Searching for " + query, Toast.LENGTH_SHORT).show();
 
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -109,7 +117,6 @@ public class SearchActivity extends SherlockFragmentActivity {
                 // Triggered only when new data needs to be appended to the list
                 // Add whatever code is needed to append new items to your AdapterView
                 customLoadMoreDataFromApi(totalItemsCount);
-                // or customLoadMoreDataFromApi(totalItemsCount);
             }
         });
 

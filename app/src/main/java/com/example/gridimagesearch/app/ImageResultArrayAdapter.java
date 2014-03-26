@@ -11,6 +11,7 @@ import com.loopj.android.image.SmartImageView;
 import java.util.List;
 
 public class ImageResultArrayAdapter extends ArrayAdapter<ImageResult> {
+
     public ImageResultArrayAdapter(Context context, List<ImageResult> images) {
         super(context, R.layout.item_image_result, images);
     }
