@@ -22,6 +22,9 @@ import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.widget.SearchView;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
 import org.apache.http.Header;
 import org.json.JSONArray;
@@ -56,6 +59,18 @@ public class SearchActivity extends SherlockFragmentActivity {
 
             }
         });
+
+        // Create default options which will be used for every
+        //  displayImage(...) call if no options will be passed to this method
+        DisplayImageOptions defaultOptions = new DisplayImageOptions.Builder()
+            .cacheInMemory(true)
+            .cacheOnDisc(true)
+        .build();
+        // Create global configuration and initialize ImageLoader with this configuration
+        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(getApplicationContext())
+            .defaultDisplayImageOptions(defaultOptions)
+        .build();
+        ImageLoader.getInstance().init(config);
     }
 
     // Append more data into the adapter

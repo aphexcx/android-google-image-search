@@ -8,12 +8,20 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.widget.ShareActionProvider;
 import com.loopj.android.image.SmartImageView;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.ImageLoadingProgressListener;
+import com.nostra13.universalimageloader.core.assist.ImageSize;
+import com.nostra13.universalimageloader.core.assist.SimpleImageLoadingListener;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -23,14 +31,47 @@ import java.io.IOException;
 public class ImageDisplayActivity extends SherlockFragmentActivity {
 
     private ShareActionProvider mShareActionProvider;
+    private com.nostra13.universalimageloader.core.ImageLoader imageLoader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_display);
         ImageResult result = (ImageResult) getIntent().getSerializableExtra("result");
-        SmartImageView ivImage = (SmartImageView) findViewById(R.id.ivResult);
-        ivImage.setImageUrl(result.getFullUrl());
+        final SmartImageView ivImage = (SmartImageView) findViewById(R.id.ivResult);
+//        ivImage.setImageUrl(result.getFullUrl());
+        String url = result.getFullUrl();
+
+        final ProgressBar progressbar = (ProgressBar) findViewById(R.id.image_progress);
+        imageLoader = ImageLoader.getInstance();
+        ImageSize size = new ImageSize(0, 0);
+        DisplayImageOptions options = null;
+//        progressbar.setProgress(0);
+        imageLoader.loadImage(url, size, options, new SimpleImageLoadingListener() {
+            @Override
+            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                // Do whatever you want with Bitmap
+                Log.d("f", "F");
+                ivImage.setImageBitmap(loadedImage);
+                createImageShareIntent();
+            }
+
+            @Override
+            public void onLoadingStarted(String imageUri, View view) {
+                super.onLoadingStarted(imageUri, view);
+                progressbar.setIndeterminate(false);
+                progressbar.setProgress(0);
+            }
+
+        }, new ImageLoadingProgressListener() {
+            @Override
+            public void onProgressUpdate(String imageUri, View view, int current, int total) {
+                progressbar.setProgress(current);
+                progressbar.setMax(total);
+            }
+        }
+       );
+//        imageLoader.displayImage(imageUri, imageView);
         setTitle(result.getTitle());
 
 ////        Intent i = new Intent(this, ImageDisplayActivity.class);
@@ -117,7 +158,6 @@ public class ImageDisplayActivity extends SherlockFragmentActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.menu_item_share) {
-            createImageShareIntent();
             return true;
         }
         return super.onOptionsItemSelected(item);
