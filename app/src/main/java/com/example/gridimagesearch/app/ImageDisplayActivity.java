@@ -2,13 +2,11 @@ package com.example.gridimagesearch.app;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 
@@ -30,66 +28,55 @@ import java.io.IOException;
 
 public class ImageDisplayActivity extends SherlockFragmentActivity {
 
+    String url;
     private ShareActionProvider mShareActionProvider;
     private com.nostra13.universalimageloader.core.ImageLoader imageLoader;
+    private ProgressBar progressbar;
+    private SmartImageView ivImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_display);
         ImageResult result = (ImageResult) getIntent().getSerializableExtra("result");
-        final SmartImageView ivImage = (SmartImageView) findViewById(R.id.ivResult);
-//        ivImage.setImageUrl(result.getFullUrl());
-        String url = result.getFullUrl();
+        ivImage = (SmartImageView) findViewById(R.id.ivResult);
+        url = result.getFullUrl();
+        progressbar = (ProgressBar) findViewById(R.id.image_progress);
+        setTitle(result.getTitle());
 
-        final ProgressBar progressbar = (ProgressBar) findViewById(R.id.image_progress);
         imageLoader = ImageLoader.getInstance();
         ImageSize size = new ImageSize(0, 0);
         DisplayImageOptions options = null;
-//        progressbar.setProgress(0);
         imageLoader.loadImage(url, size, options, new SimpleImageLoadingListener() {
-            @Override
-            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-                // Do whatever you want with Bitmap
-                Log.d("f", "F");
-                ivImage.setImageBitmap(loadedImage);
-                createImageShareIntent();
-            }
+                    @Override
+                    public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                        // Do whatever you want with Bitmap
+                        progressbar.setIndeterminate(true);
+                        ivImage.setImageBitmap(loadedImage);
+                        createImageShareIntent();
+                        progressbar.setVisibility(View.INVISIBLE);
+                    }
 
-            @Override
-            public void onLoadingStarted(String imageUri, View view) {
-                super.onLoadingStarted(imageUri, view);
-                progressbar.setIndeterminate(false);
-                progressbar.setProgress(0);
-            }
+                    @Override
+                    public void onLoadingStarted(String imageUri, View view) {
+                        super.onLoadingStarted(imageUri, view);
+                    }
 
-        }, new ImageLoadingProgressListener() {
-            @Override
-            public void onProgressUpdate(String imageUri, View view, int current, int total) {
-                progressbar.setProgress(current);
-                progressbar.setMax(total);
-            }
-        }
-       );
-//        imageLoader.displayImage(imageUri, imageView);
-        setTitle(result.getTitle());
-
-////        Intent i = new Intent(this, ImageDisplayActivity.class);
-//        Intent shareIntent = new Intent(Intent.ACTION_SEND);
-//        shareIntent.setType("image/*");
-//        Uri uri = Uri.fromFile(new File(getFilesDir(), "foo.jpg"));
-//        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-
-        // Fetch Bitmap Uri locally
-//        SmartImageView ivImage = (SmartImageView) findViewById(R.id.ivResult);
+                }, new ImageLoadingProgressListener() {
+                    @Override
+                    public void onProgressUpdate(String imageUri, View view, int current, int total) {
+                        progressbar.setIndeterminate(false);
+                        progressbar.setProgress(current);
+                        progressbar.setMax(total);
+                    }
+                }
+        );
     }
 
     private void createImageShareIntent() {
-        SmartImageView ivImage = (SmartImageView) findViewById(R.id.ivResult);
         Uri bmpUri = getLocalBitmapUri(ivImage); // see previous section
         // Create share intent as described above
         Intent shareIntent = new Intent();
-        shareIntent.setAction(Intent.ACTION_SEND);
         shareIntent.setAction(Intent.ACTION_SEND);
         shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
         shareIntent.setType("image/*");
@@ -98,15 +85,22 @@ public class ImageDisplayActivity extends SherlockFragmentActivity {
     }
 
     public Uri getLocalBitmapUri(SmartImageView imageView) {
-        Bitmap bitmap = getImageBitmap(imageView);
-        // Write image to default external storage directory
+        // Extract Bitmap from ImageView drawable
+        Drawable drawable = imageView.getDrawable();
+        Bitmap bmp = null;
+        if (drawable instanceof BitmapDrawable) {
+            bmp = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
+        } else {
+            return null;
+        }
+        // Store image to default external storage directory
         Uri bmpUri = null;
         try {
             File file = new File(Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_DOWNLOADS), "share_image.png");
-            file.mkdirs();
+                    Environment.DIRECTORY_DOWNLOADS), "share_image_" + System.currentTimeMillis() + ".png");
+            file.getParentFile().mkdirs();
             FileOutputStream out = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
+            bmp.compress(Bitmap.CompressFormat.PNG, 90, out);
             out.close();
             bmpUri = Uri.fromFile(file);
         } catch (IOException e) {
@@ -115,24 +109,8 @@ public class ImageDisplayActivity extends SherlockFragmentActivity {
         return bmpUri;
     }
 
-    public Bitmap getImageBitmap(SmartImageView imageView) {
-        Drawable drawable = imageView.getDrawable();
-        Bitmap bmp;
-        if (drawable instanceof BitmapDrawable) {
-            bmp = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
-        } else { // workaround to convert color to bitmap
-            bmp = Bitmap.createBitmap(drawable.getBounds().width(),
-                    drawable.getBounds().height(), Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bmp);
-            drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-            drawable.draw(canvas);
-        }
-        return bmp;
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-
         // Inflate the menu; this adds items to the action bar if it is present.
         getSupportMenuInflater().inflate(R.menu.image_display, menu);
 

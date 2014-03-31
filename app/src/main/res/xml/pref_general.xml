@@ -3,42 +3,42 @@
          dismiss it. -->
     <!-- NOTE: ListPreference's summary should be set to its value by the activity code. -->
     <ListPreference
-        android:key="image_size"
-        android:title="@string/pref_title_image_size"
-        android:defaultValue="0"
+        android:defaultValue=""
         android:entries="@array/pref_image_size_titles"
         android:entryValues="@array/pref_image_size_values"
+        android:key="image_size"
         android:negativeButtonText="@null"
-        android:positiveButtonText="@null" />
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_image_size" />
 
     <ListPreference
-        android:key="color_filter"
-        android:title="@string/pref_title_color_filter"
-        android:defaultValue="0"
+        android:defaultValue=""
         android:entries="@array/pref_color_filter_titles"
         android:entryValues="@array/pref_color_filter_values"
+        android:key="color_filter"
         android:negativeButtonText="@null"
-        android:positiveButtonText="@null" />
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_color_filter" />
 
     <ListPreference
-        android:key="image_type"
-        android:title="@string/pref_title_image_type"
-        android:defaultValue="0"
+        android:defaultValue=""
         android:entries="@array/pref_image_type_titles"
         android:entryValues="@array/pref_image_type_values"
+        android:key="image_type"
         android:negativeButtonText="@null"
-        android:positiveButtonText="@null" />
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_image_type" />
 
     <!-- NOTE: EditTextPreference accepts EditText attributes. -->
     <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
     <EditTextPreference
-        android:key="site_filter"
-        android:title="@string/pref_title_site_filter"
-        android:defaultValue="@string/pref_default_site_filter"
-        android:selectAllOnFocus="true"
-        android:inputType="textCapWords"
         android:capitalize="words"
+        android:defaultValue="@string/pref_default_site_filter"
+        android:inputType="textCapWords"
+        android:key="site_filter"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
         android:singleLine="true"
-        android:maxLines="1" />
+        android:title="@string/pref_title_site_filter" />
 
 </PreferenceScreen>

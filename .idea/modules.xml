@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/GridImageSearch.iml" filepath="$PROJECT_DIR$/GridImageSearch.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android-google-image-search.iml" filepath="$PROJECT_DIR$/android-google-image-search.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

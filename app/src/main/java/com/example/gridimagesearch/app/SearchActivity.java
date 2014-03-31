@@ -34,17 +34,23 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 
-public class SearchActivity extends SherlockFragmentActivity {
+public class SearchActivity extends SherlockFragmentActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     GridView gvResults;
+    SearchView searchView;
 
     ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
     ImageResultArrayAdapter imageAdapter;
     private String baseUrl;
+    private SharedPreferences sharedPref;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPref.registerOnSharedPreferenceChangeListener(this);
+
         gvResults = (GridView) findViewById(R.id.gvResults);
 
         imageAdapter = new ImageResultArrayAdapter(this, imageResults);
@@ -88,7 +94,7 @@ public class SearchActivity extends SherlockFragmentActivity {
         // Associate searchable configuration with the SearchView
         SearchManager searchManager =
                 (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView =
+        searchView =
                 (SearchView) menu.findItem(R.id.search).getActionView();
         searchView.setSearchableInfo(
                 searchManager.getSearchableInfo(getComponentName()));
@@ -111,20 +117,18 @@ public class SearchActivity extends SherlockFragmentActivity {
 
     private String getIP() {
         WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
-        String ip = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
-        return ip;
+        return Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
     }
 
     private void search(String query) {
         Toast.makeText(this, "Searching for " + query, Toast.LENGTH_SHORT).show();
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         String image_size = sharedPref.getString("image_size", "");
         String image_type = sharedPref.getString("image_type", "");
         String color_filter = sharedPref.getString("color_filter", "");
         String site_filter = sharedPref.getString("site_filter", "");
 
-        imageResults.clear();
+        imageAdapter.clear();
 
         gvResults.setOnScrollListener(new EndlessScrollListener(8, 0) {
             @Override
@@ -168,7 +172,6 @@ public class SearchActivity extends SherlockFragmentActivity {
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-
                     }
 
                     @Override
@@ -190,5 +193,11 @@ public class SearchActivity extends SherlockFragmentActivity {
             startActivity(i);
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        String query = searchView.getQuery().toString();
+        search(query);
     }
 }
